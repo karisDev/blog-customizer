@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, FC } from 'react';
+import { useState, useRef, FC } from 'react';
 import {
 	fontFamilyOptions,
 	OptionType,
@@ -19,43 +19,21 @@ import { Separator } from 'src/ui/separator';
 
 import clsx from 'clsx';
 import styles from './ArticleParamsForm.module.scss';
+import { useClose } from 'src/hooks/useClose';
 
 export const ArticleParamsForm: FC<{
 	value: ArticleStateType;
 	onChange: (v: ArticleStateType) => void;
 }> = ({ value, onChange: onUpdateSettings }) => {
 	const containerRef = useRef<HTMLDivElement>(null);
-	const [open, setOpen] = useState(false);
+	const [isMenuOpen, setIsMenuOpen] = useState(false);
 	const [draftSettings, setDraftSettings] = useState<ArticleStateType>(value);
 
-	useEffect(() => {
-		const controller = new AbortController();
-		const onClick = (e: MouseEvent) => {
-			if (
-				containerRef.current &&
-				!containerRef.current.contains(e.target as Node)
-			) {
-				setOpen(false);
-			}
-		};
-
-		const onKeydown = (e: KeyboardEvent) => {
-			if (e.key === 'Escape') {
-				setOpen(false);
-			}
-		};
-
-		if (!open) return;
-
-		window.addEventListener('mousedown', onClick, {
-			signal: controller.signal,
-		});
-		window.addEventListener('keydown', onKeydown, {
-			signal: controller.signal,
-		});
-
-		return () => controller.abort();
-	}, [open]);
+	useClose({
+		isOpen: isMenuOpen,
+		onClose: () => setIsMenuOpen(false),
+		rootRef: containerRef,
+	});
 
 	const onChange = (field: keyof ArticleStateType, value: OptionType) => {
 		setDraftSettings({ ...draftSettings, [field]: value });
@@ -73,10 +51,16 @@ export const ArticleParamsForm: FC<{
 
 	return (
 		<div ref={containerRef}>
-			<ArrowButton isOpen={open} onClick={() => setOpen((v) => !v)} />
-			<aside className={clsx(styles.container, open && styles.container_open)}>
+			<ArrowButton
+				isOpen={isMenuOpen}
+				onClick={() => setIsMenuOpen((v) => !v)}
+			/>
+			<aside
+				className={clsx(styles.container, {
+					[styles.container_open]: isMenuOpen,
+				})}>
 				<form className={styles.form} onSubmit={onSubmit} onReset={onReset}>
-					<Text size={31} weight={800} uppercase>
+					<Text as={'h2'} size={31} weight={800} uppercase>
 						Задайте параметры
 					</Text>
 
